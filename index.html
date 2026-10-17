@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WebhookForge — Discord</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050508;--bg2:#0a0a12;
+  --s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.07);
+  --b1:rgba(255,255,255,.08);--b2:rgba(139,92,246,.3);
+  --pr:#7c3aed;--pr2:#a855f7;--bl:#3b82f6;--cy:#06b6d4;
+  --gn:#10b981;--rd:#ef4444;--yw:#f59e0b;
+  --t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;
+  --r1:14px;--r2:10px;
+  --sh:0 4px 24px rgba(0,0,0,.4);
+  --gl:0 0 40px rgba(124,58,237,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+
+/* bg */
+.orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12;animation:fl 20s ease-in-out infinite}
+.orb:nth-child(1){width:600px;height:600px;background:radial-gradient(circle,#7c3aed,transparent);top:-200px;left:-200px}
+.orb:nth-child(2){width:400px;height:400px;background:radial-gradient(circle,#3b82f6,transparent);top:50%;right:-100px;animation-delay:-7s}
+.orb:nth-child(3){width:300px;height:300px;background:radial-gradient(circle,#06b6d4,transparent);bottom:-100px;left:40%;animation-delay:-14s}
+@keyframes fl{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,30px) scale(.95)}}
+.grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(139,92,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.025) 1px,transparent 1px);
+  background-size:50px 50px}
+
+/* layout */
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:24px 16px 100px}
+
+/* header */
+.hd{text-align:center;padding:48px 0 40px;animation:fD .6s ease both}
+.logo{display:inline-flex;align-items:center;gap:12px;margin-bottom:16px}
+.logo-ic{width:52px;height:52px;background:linear-gradient(135deg,#7c3aed,#3b82f6);border-radius:14px;
+  display:grid;place-items:center;font-size:24px;box-shadow:0 0 30px rgba(124,58,237,.5)}
+.logo-tx{font-size:28px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#60a5fa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+.hd p{color:var(--t2);font-size:14px;line-height:1.6}
+@keyframes fD{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* card */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r1);padding:24px;
+  backdrop-filter:blur(20px);transition:border-color .2s,box-shadow .2s;animation:fU .5s ease both;margin-bottom:16px}
+.card:hover{border-color:rgba(139,92,246,.2);box-shadow:var(--gl)}
+.card-hd{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.ci{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:17px;flex-shrink:0}
+.ci.p{background:rgba(124,58,237,.2)}.ci.b{background:rgba(59,130,246,.2)}.ci.g{background:rgba(16,185,129,.2)}
+.ct{font-size:15px;font-weight:600;color:var(--t1)}.cd{font-size:12px;color:var(--t3);margin-top:1px}
+
+/* fields */
+.fl{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px;display:block;letter-spacing:.3px}
+.iw{position:relative;display:flex;align-items:center;gap:6px}
+.inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--b1);border-radius:var(--r2);
+  padding:10px 14px;color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:13px;
+  outline:none;transition:border-color .2s,box-shadow .2s}
+.inp:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(124,58,237,.15)}
+.inp.pw{padding-right:42px}
+.ta{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--b1);border-radius:var(--r2);
+  padding:10px 14px;color:var(--t1);font-family:'Inter',sans-serif;font-size:14px;
+  outline:none;resize:vertical;min-height:80px;line-height:1.65;transition:border-color .2s,box-shadow .2s}
+.ta:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(124,58,237,.15)}
+
+/* eye */
+.eye{position:absolute;right:8px;background:none;border:none;cursor:pointer;color:var(--t3);
+  padding:4px;font-size:14px;display:flex;align-items:center;transition:color .15s}
+.eye:hover{color:var(--t2)}
+
+/* status */
+.sdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+.sdot.idle{background:var(--t3)}.sdot.checking{background:var(--yw);animation:pu 1s infinite}
+.sdot.connected{background:var(--gn)}.sdot.error{background:var(--rd)}
+@keyframes pu{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.idle{background:var(--s2);color:var(--t3);border:1px solid var(--b1)}
+.badge.checking{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.badge.connected{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+.badge.error{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r2);
+  border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;
+  transition:all .15s ease;position:relative;overflow:hidden;white-space:nowrap;text-decoration:none}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.1);opacity:0;transition:opacity .15s}
+.btn:hover:not(:disabled)::after{opacity:1}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-pr{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;box-shadow:0 4px 15px rgba(124,58,237,.3)}
+.btn-pr:hover:not(:disabled){box-shadow:0 4px 25px rgba(124,58,237,.5);transform:translateY(-1px)}
+.btn-bl{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;box-shadow:0 4px 15px rgba(59,130,246,.3)}
+.btn-bl:hover:not(:disabled){box-shadow:0 4px 25px rgba(59,130,246,.5);transform:translateY(-1px)}
+.btn-gn{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 15px rgba(16,185,129,.3)}
+.btn-gn:hover:not(:disabled){box-shadow:0 4px 25px rgba(16,185,129,.5);transform:translateY(-1px)}
+.btn-rd{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.btn-gh{background:var(--s2);color:var(--t2);border:1px solid var(--b1)}
+.btn-gh:hover:not(:disabled){color:var(--t1)}
+.btn-ic{padding:7px;min-width:32px;height:32px;justify-content:center}
+.btn-ics{padding:5px;min-width:26px;height:26px;font-size:11px;justify-content:center}
+.br{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* char count */
+.cc{font-size:11px;color:var(--t3);text-align:right;font-family:'JetBrains Mono',monospace;margin-top:3px}
+.cc.warn{color:var(--yw)}.cc.over{color:var(--rd)}
+
+/* msg list */
+.ml{display:flex;flex-direction:column;gap:10px}
+.mc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r1);overflow:hidden;
+  transition:all .2s ease;animation:fU .3s ease both}
+.mc.sending{border-color:rgba(59,130,246,.4);box-shadow:0 0 20px rgba(59,130,246,.08)}
+.mc.sent{border-color:rgba(16,185,129,.4);box-shadow:0 0 20px rgba(16,185,129,.08)}
+.mc.error{border-color:rgba(239,68,68,.4);box-shadow:0 0 20px rgba(239,68,68,.08)}
+.mh{display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:rgba(0,0,0,.2);border-bottom:1px solid var(--b1)}
+.mn{font-size:11px;font-weight:700;color:var(--pr2);font-family:'JetBrains Mono',monospace;
+  background:rgba(124,58,237,.15);padding:2px 8px;border-radius:6px}
+.ms{font-size:11px;font-weight:500}
+.ms.pending{color:var(--t3)}.ms.sending{color:var(--yw)}.ms.sent{color:var(--gn)}.ms.error{color:var(--rd)}
+.ma{margin-left:auto;display:flex;gap:3px}
+.mb{padding:14px;display:flex;flex-direction:column;gap:10px}
+
+/* img preview */
+.ip{border-radius:8px;max-width:180px;max-height:110px;object-fit:cover;
+  border:1px solid var(--b1);display:none;margin-top:6px}
+.ip.show{display:block}
+
+/* progress */
+.pb-wrap{background:rgba(0,0,0,.3);border-radius:10px;height:8px;overflow:hidden;margin:12px 0}
+.pb{height:100%;background:linear-gradient(90deg,#7c3aed,#3b82f6);border-radius:10px;
+  transition:width .4s ease;position:relative;overflow:hidden}
+.pb::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+  animation:sh 1.5s infinite}
+@keyframes sh{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* stats */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;margin:12px 0}
+.sb{background:rgba(0,0,0,.2);border:1px solid var(--b1);border-radius:10px;padding:10px;text-align:center}
+.sn{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.sn.pr{color:var(--pr2)}.sn.gn{color:var(--gn)}.sn.rd{color:var(--rd)}.sn.bl{color:var(--bl)}
+.sl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* log */
+.log-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.li{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;
+  background:rgba(0,0,0,.2);font-size:12px}
+.li .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.li.sent .dot{background:var(--gn)}.li.error .dot{background:var(--rd)}
+.li.sending .dot{background:var(--yw);animation:pu 1s infinite}.li.pending .dot{background:var(--t3)}
+
+/* empty */
+.es{text-align:center;padding:50px 20px;color:var(--t3)}
+.es-ic{font-size:44px;margin-bottom:10px;opacity:.5}
+.es-t{font-size:15px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.es-d{font-size:13px;line-height:1.6}
+
+/* toast */
+#tc{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.ts{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;padding:11px 16px;
+  font-size:13px;display:flex;align-items:center;gap:8px;min-width:220px;max-width:320px;
+  pointer-events:all;animation:sI .3s ease both;box-shadow:var(--sh);backdrop-filter:blur(20px)}
+.ts.success{border-color:rgba(16,185,129,.4)}.ts.error{border-color:rgba(239,68,68,.4)}.ts.info{border-color:rgba(59,130,246,.4)}
+@keyframes sI{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes sO{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+
+/* section title */
+.st{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;
+  margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.st::after{content:'';flex:1;height:1px;background:var(--b1)}
+
+/* preview panel */
+.prev{background:rgba(54,57,63,.6);border:1px solid rgba(255,255,255,.06);border-radius:8px;
+  padding:12px 14px;margin-top:6px;display:none}
+.prev.show{display:block}
+.prev-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.prev-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);
+  display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.prev-name{font-size:14px;font-weight:700;color:#fff}
+.prev-time{font-size:11px;color:rgba(255,255,255,.3);margin-left:6px}
+.prev-body{font-size:14px;color:#dcddde;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+
+/* kbd */
+kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:4px;
+  padding:1px 6px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--t2)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(139,92,246,.3);border-radius:4px}
+
+/* responsive */
+@media(max-width:580px){
+  .wrap{padding:12px 10px 80px}
+  .hd{padding:24px 0 20px}
+  .logo-tx{font-size:22px}
+  .sg{grid-template-columns:repeat(2,1fr)}
+  .btn{padding:8px 14px;font-size:12px}
+  .card{padding:16px}
+}
+
+/* stagger */
+.card:nth-child(1){animation-delay:.1s}
+.card:nth-child(2){animation-delay:.2s}
+.card:nth-child(3){animation-delay:.3s}
+
+/* success flash */
+@keyframes succ{0%{box-shadow:0 0 0 rgba(16,185,129,0)}50%{box-shadow:0 0 40px rgba(16,185,129,.4)}100%{box-shadow:0 0 0 rgba(16,185,129,0)}}
+.flash-success{animation:succ .6s ease}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+<div class="grid"></div>
+<div id="tc"></div>
+
+<div class="wrap">
+  <!-- HEADER -->
+  <div class="hd">
+    <div class="logo">
+      <div class="logo-ic">⚡</div>
+      <span class="logo-tx">WebhookForge</span>
+    </div>
+    <p>Gerenciador de webhooks Discord — elegante, rápido e completamente funcional.</p>
+    <p style="font-size:12px;color:var(--t3);margin-top:8px"><kbd>Ctrl+N</kbd> nova mensagem &nbsp;·&nbsp; <kbd>Ctrl+Enter</kbd> enviar tudo</p>
+  </div>
+
+  <!-- WEBHOOK CONNECTION -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="ci p">🔗</div>
+      <div><div class="ct">Conexão do Webhook</div><div class="cd">Cole a URL do seu webhook do Discord</div></div>
+      <div id="badge" class="badge idle" style="margin-left:auto">
+        <span class="sdot idle" id="sdot"></span><span id="stext">Desconectado</span>
+      </div>
+    </div>
+    <div class="fl">
+      <label class="lbl">URL do Webhook</label>
+      <div class="iw">
+        <input id="wurl" type="password" class="inp pw" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false">
+        <button class="eye" onclick="toggleEye()" title="Mostrar/ocultar"><span id="eyeic">👁</span></button>
+      </div>
+    </div>
+    <div class="br">
+      <button class="btn btn-pr" onclick="connectWH()">⚡ Conectar webhook</button>
+      <button class="btn btn-gh" onclick="clearWH()">🗑️ Limpar URL</button>
+    </div>
+  </div>
+
+  <!-- MESSAGE MANAGER -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="ci b">💬</div>
+      <div><div class="ct">Gerenciador de Mensagens</div><div class="cd">Crie e organize seu lote de mensagens</div></div>
+      <div style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t3)">
+        <span id="mc">0</span>/250
+      </div>
+    </div>
+    <div class="br" style="margin-bottom:16px">
+      <button class="btn btn-bl" id="addbtn" onclick="addMsg()">+ Adicionar mensagem</button>
+      <button class="btn btn-gh" id="clrbtn" onclick="clearAll()" style="display:none">🗑️ Limpar todas</button>
+    </div>
+    <div id="ml" class="ml">
+      <div class="es" id="es">
+        <div class="es-ic">📭</div>
+        <div class="es-t">Nenhuma mensagem ainda</div>
+        <div class="es-d">Clique em "+ Adicionar mensagem" para começar.<br>Suporte a emojis personalizados, Markdown e imagens.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEND CENTER -->
+  <div class="card" id="sendcard" style="display:none">
+    <div class="card-hd">
+      <div class="ci g">🚀</div>
+      <div><div class="ct">Central de Envio</div><div class="cd">Acompanhe o progresso em tempo real</div></div>
+    </div>
+    <div class="sg">
+      <div class="sb"><div class="sn pr" id="stot">0</div><div class="sl">Total</div></div>
+      <div class="sb"><div class="sn gn" id="ssent">0</div><div class="sl">Enviadas</div></div>
+      <div class="sb"><div class="sn rd" id="serr">0</div><div class="sl">Erros</div></div>
+      <div class="sb"><div class="sn bl" id="spend">0</div><div class="sl">Pendentes</div></div>
+    </div>
+    <div class="pb-wrap"><div class="pb" id="pb" style="width:0%"></div></div>
+    <div class="br" style="margin-bottom:16px">
+      <button class="btn btn-gn" id="sendbtn" onclick="sendAll()">🚀 Enviar todas as mensagens</button>
+      <button class="btn btn-rd" id="cancelbtn" onclick="doCancel()" style="display:none">⛔ Cancelar</button>
+      <button class="btn btn-gh" id="retrybtn" onclick="retryFailed()" style="display:none">🔄 Repetir erros</button>
+      <button class="btn btn-gh" onclick="clearLog()" style="font-size:11px">Limpar log</button>
+    </div>
+    <div class="st">Log de envios</div>
+    <div id="loglist" class="log-list"></div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────
+let msgs=[], nid=1, whStatus='idle', sending=false, cancelled=false;
+const MAX=250, MAX_CHARS=2000, CONC=4;
+const logEntries=[];
+
+// ─── TOAST ─────────────────────────────────────
+function toast(txt,type='info',dur=3200){
+  const icons={success:'✅',error:'❌',info:'ℹ️'};
+  const el=document.createElement('div');
+  el.className=`ts ${type}`;
+  el.innerHTML=`<span>${icons[type]}</span><span>${txt}</span>`;
+  document.getElementById('tc').appendChild(el);
+  setTimeout(()=>{el.style.animation='sO .3s ease both';setTimeout(()=>el.remove(),280)},dur);
+}
+
+// ─── WEBHOOK ────────────────────────────────────
+function getWH(){return document.getElementById('wurl').value.trim()}
+function validWH(u){return/^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(u)}
+
+function setStatus(s,msg){
+  whStatus=s;
+  const dot=document.getElementById('sdot');
+  const tx=document.getElementById('stext');
+  const badge=document.getElementById('badge');
+  dot.className=`sdot ${s}`;
+  tx.textContent=msg;
+  badge.className=`badge ${s==='checking'?'checking':s==='connected'?'connected':s==='error'?'error':'idle'}`;
+}
+
+function toggleEye(){
+  const i=document.getElementById('wurl');
+  const ic=document.getElementById('eyeic');
+  i.type=i.type==='password'?'text':'password';
+  ic.textContent=i.type==='password'?'👁':'🙈';
+}
+
+function clearWH(){
+  document.getElementById('wurl').value='';
+  setStatus('idle','Desconectado');
+  toast('URL limpa','info');
+}
+
+async function connectWH(){
+  const u=getWH();
+  if(!u){toast('Cole a URL do webhook primeiro','error');return}
+  if(!validWH(u)){toast('URL inválida — deve começar com https://discord.com/api/webhooks/…','error');return}
+  setStatus('checking','Verificando…');
+  try{
+    const r=await fetch(u,{method:'GET'});
+    if(r.ok){
+      const d=await r.json();
+      setStatus('connected',`Conectado — ${d.name||'webhook'}`);
+      toast(`Webhook "${d.name||'webhook'}" conectado!`,'success');
+    } else if(r.status===401||r.status===403){
+      setStatus('error','Token inválido');
+      toast('Token inválido ou webhook deletado','error');
+    } else {
+      setStatus('error',`HTTP ${r.status}`);
+      toast(`Erro ao conectar: HTTP ${r.status}`,'error');
+    }
+  }catch(e){
+    setStatus('error','Erro de rede');
+    toast('Erro de rede — verifique a URL e sua conexão','error');
+  }
+}
+
+// ─── MESSAGES ───────────────────────────────────
+function addMsg(){
+  if(msgs.length>=MAX){toast(`Limite de ${MAX} mensagens atingido`,'error');return}
+  msgs.push({id:nid++,content:'',imgUrl:'',status:'pending',err:null});
+  render(); updateUI(); saveDrafts();
+  setTimeout(()=>{
+    const cards=document.querySelectorAll('.mc');
+    if(cards.length)cards[cards.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});
+  },80);
+}
+
+function removeMsg(id){
+  msgs=msgs.filter(m=>m.id!==id);
+  render(); updateUI(); saveDrafts();
+}
+
+function dupMsg(id){
+  if(msgs.length>=MAX){toast('Limite atingido','error');return}
+  const i=msgs.findIndex(m=>m.id===id);
+  if(i<0)return;
+  msgs.splice(i+1,0,{...msgs[i],id:nid++,status:'pending',err:null});
+  render(); updateUI(); saveDrafts();
+}
+
+function moveMsg(id,d){
+  const i=msgs.findIndex(m=>m.id===id);
+  const ni=i+d;
+  if(i<0||ni<0||ni>=msgs.length)return;
+  [msgs[i],msgs[ni]]=[msgs[ni],msgs[i]];
+  render(); saveDrafts();
+}
+
+function onContent(id,v){
+  const m=msgs.find(m=>m.id===id);
+  if(m)m.content=v;
+  const cc=document.getElementById(`cc${id}`);
+  if(cc){
+    cc.textContent=`${v.length}/${MAX_CHARS}`;
+    cc.className='cc'+(v.length>MAX_CHARS?' over':v.length>1800?' warn':'');
+  }
+  updatePrev(id,v);
+  saveDrafts();
+}
+
+function onImgUrl(id,v){
+  const m=msgs.find(m=>m.id===id);
+  if(m)m.imgUrl=v;
+  const img=document.getElementById(`ip${id}`);
+  if(img){
+    if(v&&v.startsWith('https://')){
+      img.src=v; img.className='ip show';
+      img.onerror=()=>{img.className='ip';img.src=''};
+    } else {img.className='ip';img.src='';}
+  }
+  saveDrafts();
+}
+
+function clearImgUrl(id){
+  const m=msgs.find(m=>m.id===id);
+  if(m)m.imgUrl='';
+  const el=document.getElementById(`iu${id}`);
+  if(el)el.value='';
+  onImgUrl(id,'');
+}
+
+function clearMsgContent(id){
+  const m=msgs.find(m=>m.id===id);
+  if(m){m.content='';m.imgUrl='';}
+  const ta=document.getElementById(`ta${id}`);
+  const iu=document.getElementById(`iu${id}`);
+  if(ta)ta.value='';
+  if(iu)iu.value='';
+  onContent(id,''); onImgUrl(id,'');
+}
+
+function clearAll(){
+  if(!msgs.length)return;
+  if(!confirm(`Remover todas as ${msgs.length} mensagens?`))return;
+  msgs=[]; render(); updateUI(); saveDrafts();
+}
+
+function updatePrev(id,v){
+  const el=document.getElementById(`prev${id}`);
+  const body=document.getElementById(`prevb${id}`);
+  if(!el||!body)return;
+  if(v.trim()){el.className='prev show';body.textContent=v;}
+  else{el.className='prev';}
+}
+
+// ─── RENDER ─────────────────────────────────────
+function render(){
+  const list=document.getElementById('ml');
+  const es=document.getElementById('es');
+  if(!msgs.length){
+    list.innerHTML='';list.appendChild(es);es.style.display='';return;
+  }
+  es.style.display='none';
+  const frag=document.createDocumentFragment();
+  msgs.forEach((m,i)=>{
+    const el=document.createElement('div');
+    el.className=`mc ${m.status}`;el.id=`mc${m.id}`;
+    el.innerHTML=cardHTML(m,i);
+    frag.appendChild(el);
+  });
+  list.innerHTML='';list.appendChild(es);list.appendChild(frag);
+  msgs.forEach(m=>{
+    const ta=document.getElementById(`ta${m.id}`);
+    const iu=document.getElementById(`iu${m.id}`);
+    if(ta)ta.value=m.content||'';
+    if(iu)iu.value=m.imgUrl||'';
+    onContent(m.id,m.content||'');
+    onImgUrl(m.id,m.imgUrl||'');
+    updatePrev(m.id,m.content||'');
+  });
+}
+
+function cardHTML(m,i){
+  const sl={pending:'⬜ Pendente',sending:'⏳ Enviando…',sent:'✅ Enviada',error:'❌ Erro'};
+  const now=new Date();
+  const t=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  return `
+<div class="mh">
+  <span class="mn">MSG #${i+1}</span>
+  <span class="ms ${m.status}" id="ms${m.id}">${sl[m.status]||sl.pending}${m.err?': '+esc(m.err):''}</span>
+  <div class="ma">
+    <button class="btn btn-gh btn-ics" onclick="moveMsg(${m.id},-1)" title="Mover para cima">↑</button>
+    <button class="btn btn-gh btn-ics" onclick="moveMsg(${m.id},1)" title="Mover para baixo">↓</button>
+    <button class="btn btn-gh btn-ics" onclick="dupMsg(${m.id})" title="Duplicar">⧉</button>
+    <button class="btn btn-gh btn-ics" onclick="clearMsgContent(${m.id})" title="Limpar conteúdo">✕</button>
+    <button class="btn btn-ics btn-rd" onclick="removeMsg(${m.id})" title="Remover">🗑</button>
+  </div>
+</div>
+<div class="mb">
+  <div class="fl" style="margin:0">
+    <label class="lbl">Conteúdo da mensagem</label>
+    <textarea class="ta" id="ta${m.id}" rows="3"
+      placeholder="Escreva sua mensagem aqui…&#10;&#10;Suporte a: **negrito**, *itálico*, \`código\`, <:emoji:id>, <a:animado:id>, @menções, #canais"
+      oninput="onContent(${m.id},this.value)"></textarea>
+    <div class="cc" id="cc${m.id}">0/${MAX_CHARS}</div>
+  </div>
+  <div id="prev${m.id}" class="prev">
+    <div class="prev-head">
+      <div class="prev-av">⚡</div>
+      <span class="prev-name">Webhook</span>
+      <span class="prev-time">${t}</span>
+    </div>
+    <div class="prev-body" id="prevb${m.id}"></div>
+  </div>
+  <div class="fl" style="margin:0">
+    <label class="lbl">URL da imagem (opcional)</label>
+    <div class="iw">
+      <input type="url" class="inp" id="iu${m.id}"
+        placeholder="https://exemplo.com/imagem.png"
+        oninput="onImgUrl(${m.id},this.value)"
+        style="font-family:'JetBrains Mono',monospace;font-size:12px">
+      <button class="btn btn-gh btn-ic" onclick="clearImgUrl(${m.id})" title="Remover imagem">✕</button>
+    </div>
+    <img class="ip" id="ip${m.id}" alt="preview">
+  </div>
+  <div style="display:flex;justify-content:flex-end">
+    <button class="btn btn-gh" style="font-size:11px" onclick="sendSingle(${m.id})">↗ Enviar esta</button>
+  </div>
+</div>`;
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function updateUI(){
+  const n=msgs.length;
+  document.getElementById('mc').textContent=n;
+  document.getElementById('addbtn').disabled=n>=MAX;
+  document.getElementById('clrbtn').style.display=n?'':'none';
+  document.getElementById('sendcard').style.display=n?'':'none';
+  updateStats();
+}
+
+function updateStats(){
+  const n=msgs.length;
+  const sent=msgs.filter(m=>m.status==='sent').length;
+  const errs=msgs.filter(m=>m.status==='error').length;
+  const pend=msgs.filter(m=>m.status==='pending'||m.status==='sending').length;
+  document.getElementById('stot').textContent=n;
+  document.getElementById('ssent').textContent=sent;
+  document.getElementById('serr').textContent=errs;
+  document.getElementById('spend').textContent=pend;
+  const done=sent+errs;
+  document.getElementById('pb').style.width=(n?done/n*100:0)+'%';
+  document.getElementById('retrybtn').style.display=errs?'':'none';
+}
+
+function setMsgStatus(id,status,err){
+  const m=msgs.find(m=>m.id===id);
+  if(m){m.status=status;m.err=err||null;}
+  const card=document.getElementById(`mc${id}`);
+  if(card){
+    card.className=`mc ${status}`;
+    const el=document.getElementById(`ms${id}`);
+    if(el){
+      const sl={pending:'⬜ Pendente',sending:'⏳ Enviando…',sent:'✅ Enviada',error:'❌ Erro'};
+      el.className=`ms ${status}`;
+      el.textContent=(sl[status]||sl.pending)+(err?': '+esc(err):'');
+    }
+  }
+  updateStats();
+}
+
+// ─── SEND LOGIC ─────────────────────────────────
+async function buildPayload(content,imgUrl){
+  const body={};
+  if(content&&content.trim())body.content=content;
+  if(imgUrl&&imgUrl.startsWith('https://')){
+    // minimal embed — just image, no title/description/color
+    body.embeds=[{image:{url:imgUrl}}];
+  }
+  if(!body.content&&!body.embeds)throw new Error('Mensagem vazia');
+  return body;
+}
+
+async function postWH(url,payload){
+  const r=await fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  if(r.status===429){
+    const d=await r.json().catch(()=>({}));
+    return{rl:true,wait:(d.retry_after||2)*1000};
+  }
+  if(!r.ok){
+    const d=await r.json().catch(()=>({}));
+    throw new Error(d.message||`HTTP ${r.status}`);
+  }
+  return{ok:true};
+}
+
+async function sendSingle(id){
+  const u=getWH();
+  if(!u||!validWH(u)){toast('Conecte o webhook primeiro','error');return}
+  const m=msgs.find(x=>x.id===id);
+  if(!m)return;
+  if(!m.content.trim()&&!m.imgUrl){toast('Mensagem vazia','error');return}
+  if(m.content.length>MAX_CHARS){toast('Conteúdo excede 2000 caracteres','error');return}
+  setMsgStatus(id,'sending',null);
+  try{
+    const pl=await buildPayload(m.content,m.imgUrl);
+    let tries=0;
+    while(tries<5){
+      const res=await postWH(u,pl);
+      if(res.rl){await sleep(res.wait);tries++;continue;}
+      setMsgStatus(id,'sent',null);
+      addLog(id,'sent');
+      toast('Mensagem enviada com sucesso!','success');
+      return;
+    }
+    throw new Error('Rate limit persistente');
+  }catch(e){
+    setMsgStatus(id,'error',e.message);
+    addLog(id,'error',e.message);
+    toast(`Erro: ${e.message}`,'error');
+  }
+}
+
+async function sendAll(){
+  const u=getWH();
+  if(!u||!validWH(u)){toast('Conecte o webhook primeiro','error');return}
+  const queue=msgs.filter(m=>m.status!=='sent'&&(m.content.trim()||m.imgUrl));
+  if(!queue.length){toast('Nenhuma mensagem válida pendente','info');return}
+  if(!confirm(`Enviar ${queue.length} mensagem(ns) para o webhook?`))return;
+  sending=true; cancelled=false;
+  document.getElementById('sendbtn').disabled=true;
+  document.getElementById('cancelbtn').style.display='';
+
+  let globalRLUntil=0;
+
+  async function worker(items){
+    for(const m of items){
+      if(cancelled){setMsgStatus(m.id,'pending',null);continue;}
+      const w=globalRLUntil-Date.now();
+      if(w>0)await sleep(w);
+      setMsgStatus(m.id,'sending',null);
+      let tries=0,done=false;
+      while(!done&&tries<6){
+        if(cancelled){setMsgStatus(m.id,'pending',null);done=true;break;}
+        try{
+          const pl=await buildPayload(m.content,m.imgUrl);
+          const res=await postWH(u,pl);
+          if(res.rl){globalRLUntil=Date.now()+res.wait;await sleep(res.wait);tries++;continue;}
+          setMsgStatus(m.id,'sent',null);
+          addLog(m.id,'sent');
+          done=true;
+        }catch(e){
+          setMsgStatus(m.id,'error',e.message);
+          addLog(m.id,'error',e.message);
+          done=true;
+        }
+      }
+      if(!done){setMsgStatus(m.id,'error','Rate limit persistente');addLog(m.id,'error','Rate limit');}
+      // ~300ms gap between requests to stay under rate limit
+      if(!cancelled)await sleep(300);
+    }
+  }
+
+  // split queue into CONC workers
+  const chunks=[];
+  for(let i=0;i<CONC;i++){
+    const chunk=[];
+    for(let j=i;j<queue.length;j+=CONC)chunk.push(queue[j]);
+    if(chunk.length)chunks.push(chunk);
+  }
+  await Promise.all(chunks.map(worker));
+
+  sending=false;
+  document.getElementById('sendbtn').disabled=false;
+  document.getElementById('cancelbtn').style.display='none';
+
+  const sent=msgs.filter(m=>m.status==='sent').length;
+  const errs=msgs.filter(m=>m.status==='error').length;
+
+  if(cancelled){toast(`Cancelado. ${sent} enviadas.`,'info');}
+  else if(!errs){
+    toast(`✅ Todas as ${sent} mensagens enviadas!`,'success',5000);
+    document.getElementById('sendcard').classList.add('flash-success');
+    setTimeout(()=>document.getElementById('sendcard').classList.remove('flash-success'),600);
+  } else {
+    toast(`${sent} enviadas, ${errs} com erro`,'error',5000);
+  }
+  updateStats();
+}
+
+function doCancel(){cancelled=true;toast('Cancelamento solicitado…','info');}
+
+async function retryFailed(){
+  msgs.filter(m=>m.status==='error').forEach(m=>{m.status='pending';m.err=null;});
+  render(); updateStats();
+  await sendAll();
+}
+
+// ─── LOG ────────────────────────────────────────
+function addLog(id,status,err){
+  const idx=msgs.findIndex(m=>m.id===id);
+  logEntries.unshift({num:idx+1,status,err:err||null,time:new Date().toLocaleTimeString('pt-BR')});
+  renderLog();
+}
+
+function renderLog(){
+  const el=document.getElementById('loglist');
+  if(!logEntries.length){el.innerHTML='';return;}
+  el.innerHTML=logEntries.slice(0,60).map(e=>`
+    <div class="li ${e.status}">
+      <div class="dot"></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3)">${e.time}</span>
+      <span>MSG #${e.num}</span>
+      ${e.err?`<span style="color:var(--rd);font-size:11px">— ${esc(e.err)}</span>`:''}
+    </div>`).join('');
+}
+
+function clearLog(){logEntries.length=0;renderLog();}
+
+// ─── DRAFTS ─────────────────────────────────────
+function saveDrafts(){
+  try{
+    localStorage.setItem('wf_d',JSON.stringify(msgs.map(m=>({id:m.id,content:m.content,imgUrl:m.imgUrl}))));
+    localStorage.setItem('wf_n',String(nid));
+  }catch(e){}
+}
+
+function loadDrafts(){
+  try{
+    const raw=localStorage.getItem('wf_d');
+    const n=localStorage.getItem('wf_n');
+    if(raw){
+      const d=JSON.parse(raw);
+      msgs=d.map(x=>({...x,status:'pending',err:null}));
+      nid=n?parseInt(n):msgs.length+1;
+      render(); updateUI();
+      if(msgs.length)toast(`${msgs.length} rascunho(s) carregado(s) do armazenamento local`,'info');
+    }
+  }catch(e){}
+}
+
+// ─── UTILS ──────────────────────────────────────
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();sendAll();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();addMsg();}
+});
+
+// ─── INIT ───────────────────────────────────────
+loadDrafts();
+</script>
+</body>
+</html>
